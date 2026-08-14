@@ -320,11 +320,12 @@
   // ------------------------------------------------------------
   const shops = [
     {
+      id: "001",
       name: "さんとしょ〜さんわにあるみんなのとしょかん〜",
       owner: "運営：一般社団法人オリコム",
       lat: 34.719725891458545,
       lng: 135.40882325401364,
-      photo: "https://i.pravatar.cc/150?img=68",
+      photo: "images/001.jpg",
       summary: "誰でも本を持ち寄り、借りられる、まちの小さな図書館。",
       noteUrl: "https://note.com/oricom/n/n7ec9778519e4"
     }
@@ -348,7 +349,7 @@
       className: '',
       html: `
         <div class="pin-wrap">
-          <img class="pin-photo" src="${shop.photo}" alt="${shop.owner}">
+          <img class="pin-photo" src="${shop.photo}" alt="${shop.owner}" onerror="this.onerror=null;this.src='https://i.pravatar.cc/150?img=68';">
         </div>
       `,
       iconSize: [62, 62],
@@ -359,7 +360,7 @@
     const popupHtml = `
       <div class="card">
         <div class="card-photo-row">
-          <img class="card-photo" src="${shop.photo}" alt="${shop.owner}">
+          <img class="card-photo" src="${shop.photo}" alt="${shop.owner}" onerror="this.onerror=null;this.src='https://i.pravatar.cc/150?img=68';">
           <div>
             <div class="card-name">${shop.name}</div>
             <div class="card-owner">${shop.owner}</div>
