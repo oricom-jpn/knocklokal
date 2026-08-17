@@ -91,10 +91,11 @@
   }
   header p.lead{
     margin: 0 0 10px;
-    font-size: 12.5px;
+    font-size: clamp(11.5px, 3.1vw, 12.5px);
     color: var(--ink);
     line-height: 1.75;
     font-weight: 500;
+    text-wrap: balance;
   }
   .about-btn{
     display: inline-flex;
@@ -326,7 +327,7 @@
       lat: 34.719725891458545,
       lng: 135.40882325401364,
       photo: "images/001.jpg",
-      summary: "街の人の推し本棚が並ぶ、まちの小さな図書館。",
+      summary: "誰でも本を持ち寄り、借りられる、まちの小さな図書館。",
       noteUrl: "https://note.com/oricom/n/n7ec9778519e4"
     }
   ];
@@ -334,7 +335,7 @@
   // ------------------------------------------------------------
   // 地図の初期化（阪神尼崎駅を中心に）
   // ------------------------------------------------------------
-  const map = L.map('map', { zoomControl: true }).setView([34.71847153393393, 135.41724660250588], 16);
+  const map = L.map('map', { zoomControl: true }).setView([34.72014440357966, 135.41339040918618], 16);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
