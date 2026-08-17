@@ -196,6 +196,54 @@
 
   .app-content{ display: none; }
   .app-content.unlocked{ display: block; }
+  .checkbox-label{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    margin: 14px 0 2px;
+    cursor: pointer;
+  }
+  .checkbox-label input{ width: auto; margin: 0; }
+  .link-btn{
+    background: none;
+    border: none;
+    color: var(--red);
+    font-weight: 700;
+    font-size: 10.5px;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 4px;
+  }
+  .edit-btn{
+    background: var(--paper-deep);
+    color: var(--navy);
+    font-weight: 700;
+    font-size: 10.5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .edit-btn:hover{ background: var(--navy); color: #fff; }
+  .editing-banner{
+    display: none;
+    background: #fdf3e3;
+    border: 1px solid #edd9a8;
+    color: #7a5b16;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .editing-banner.show{ display: flex; }
+  .editing-banner button{
+    background: none; border: none; color: #7a5b16;
+    text-decoration: underline; font-weight: 700; font-size: 11px; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -216,7 +264,7 @@
 
   <section>
     <h2><span class="num">1</span>GitHub接続設定</h2>
-    <p class="desc">この画面から直接リポジトリを更新します。Personal Access Token（Contents の read/write 権限）が必要です。トークンは保存されず、ページを閉じると消えます。</p>
+    <p class="desc">この画面から直接リポジトリを更新します。Personal Access Token（Contents の read/write 権限）が必要です。</p>
 
     <label>GitHubユーザー名 / Organization<span class="required">必須</span></label>
     <input type="text" id="ghOwner" placeholder="例：oricom-jpn">
@@ -231,12 +279,17 @@
     <input type="password" id="ghToken" placeholder="ghp_...">
     <p class="hint">GitHub右上のアイコン → Settings → Developer settings → Personal access tokens で発行できます。</p>
 
+    <label class="checkbox-label">
+      <input type="checkbox" id="rememberMe"> このブラウザに接続情報を保存する
+    </label>
+    <p class="hint">保存すると次回からの入力が不要になりますが、この端末を他の人と共有している場合は注意してください。<button type="button" class="link-btn" onclick="forgetSaved()">保存を削除</button></p>
+
     <button class="btn-secondary" style="margin-top:14px;" onclick="loadShops()">既存データを読み込む</button>
     <div id="loadStatus" class="status"></div>
 
     <div id="shopTableWrap" style="display:none; margin-top:14px;">
       <table>
-        <thead><tr><th></th><th>ID</th><th>店名</th></tr></thead>
+        <thead><tr><th></th><th>ID</th><th>店名</th><th></th></tr></thead>
         <tbody id="shopTableBody"></tbody>
       </table>
       <p class="next-id-line">次のID候補：<span class="id-badge" id="nextIdBadge">—</span></p>
@@ -244,8 +297,13 @@
   </section>
 
   <section>
-    <h2><span class="num">2</span>新しいお店を登録</h2>
-    <p class="desc">「1」で既存データを読み込むと、IDが自動で採番されます。写真は自動で圧縮してからアップロードします。</p>
+    <h2><span class="num">2</span>お店を登録・編集</h2>
+    <p class="desc">「1」で既存データを読み込むと、新規登録時はIDが自動で採番されます。テーブルの「編集」を押すと、その内容がここに読み込まれます。写真は自動で圧縮してからアップロードします。</p>
+
+    <div class="editing-banner" id="editingBanner">
+      <span id="editingBannerText"></span>
+      <button onclick="resetForm()">新規登録に戻す</button>
+    </div>
 
     <div class="row2">
       <div>
@@ -273,9 +331,9 @@
     </div>
     <p class="hint">Googleマップでピンをタップすると緯度経度が表示されます。それをコピーして貼り付けてください。</p>
 
-    <label>店主の写真<span class="required">必須</span></label>
+    <label>店主の写真<span id="photoRequiredMark" class="required">必須</span></label>
     <input type="file" id="fPhoto" accept="image/*">
-    <p class="hint">アップロード時に自動で縮小・圧縮します（長辺600px程度）。</p>
+    <p class="hint" id="photoHint">アップロード時に自動で縮小・圧縮します（長辺600px程度）。</p>
 
     <label>紹介文</label>
     <textarea id="fSummary" placeholder="一言紹介文"></textarea>
@@ -296,9 +354,43 @@
     if(input === EDITOR_PASSWORD){
       document.getElementById('lockOverlay').classList.add('hidden');
       document.getElementById('appContent').classList.add('unlocked');
+      loadSavedConnection();
     }else{
       document.getElementById('lockError').classList.add('show');
     }
+  }
+
+  const STORAGE_KEY = 'knocklocal_editor_connection';
+
+  function loadSavedConnection(){
+    try{
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if(saved){
+        document.getElementById('ghOwner').value = saved.owner || '';
+        document.getElementById('ghRepo').value = saved.repo || '';
+        document.getElementById('ghBranch').value = saved.branch || 'main';
+        document.getElementById('ghToken').value = saved.token || '';
+        document.getElementById('rememberMe').checked = true;
+      }
+    }catch(e){ /* 保存データがなければ何もしない */ }
+  }
+
+  function saveConnectionIfNeeded(){
+    if(document.getElementById('rememberMe').checked){
+      const data = {
+        owner: document.getElementById('ghOwner').value.trim(),
+        repo: document.getElementById('ghRepo').value.trim(),
+        branch: document.getElementById('ghBranch').value.trim(),
+        token: document.getElementById('ghToken').value.trim()
+      };
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch(e){ /* 保存に失敗しても処理は続行 */ }
+    }
+  }
+
+  function forgetSaved(){
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+    document.getElementById('rememberMe').checked = false;
+    showStatus('loadStatus', 'ok', 'このブラウザの保存データを削除しました。');
   }
 
   let currentShops = null;
@@ -335,6 +427,26 @@
     el.innerHTML = msg;
   }
 
+  function renderShopTable(){
+    const tbody = document.getElementById('shopTableBody');
+    tbody.innerHTML = '';
+    let maxId = 0;
+    currentShops.forEach(shop => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><img class="thumb" src="${shop.photo}" onerror="this.style.visibility='hidden'"></td>
+        <td><span class="id-badge">${shop.id}</span></td>
+        <td>${shop.name}</td>
+        <td><button type="button" class="edit-btn" onclick="editShop('${shop.id}')">編集</button></td>
+      `;
+      tbody.appendChild(tr);
+      const n = parseInt(shop.id, 10);
+      if(!isNaN(n) && n > maxId) maxId = n;
+    });
+    document.getElementById('shopTableWrap').style.display = 'block';
+    document.getElementById('nextIdBadge').textContent = String(maxId + 1).padStart(3, '0');
+  }
+
   async function loadShops(){
     showStatus('loadStatus', 'loading', '読み込み中…');
     try{
@@ -344,32 +456,53 @@
       currentShopsSha = data.sha;
       currentShops = JSON.parse(b64DecodeUnicode(data.content));
 
-      const tbody = document.getElementById('shopTableBody');
-      tbody.innerHTML = '';
-      let maxId = 0;
-      currentShops.forEach(shop => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><img class="thumb" src="${shop.photo}" onerror="this.style.visibility='hidden'"></td>
-          <td><span class="id-badge">${shop.id}</span></td>
-          <td>${shop.name}</td>
-        `;
-        tbody.appendChild(tr);
-        const n = parseInt(shop.id, 10);
-        if(!isNaN(n) && n > maxId) maxId = n;
-      });
-      document.getElementById('shopTableWrap').style.display = 'block';
-
-      const nextId = String(maxId + 1).padStart(3, '0');
-      document.getElementById('nextIdBadge').textContent = nextId;
+      renderShopTable();
       if(!document.getElementById('fId').value){
-        document.getElementById('fId').value = nextId;
+        document.getElementById('fId').value = document.getElementById('nextIdBadge').textContent;
       }
 
+      saveConnectionIfNeeded();
       showStatus('loadStatus', 'ok', `${currentShops.length}件のお店データを読み込みました。`);
     }catch(err){
       showStatus('loadStatus', 'err', 'エラー：' + err.message);
     }
+  }
+
+  function editShop(id){
+    const shop = currentShops.find(s => s.id === id);
+    if(!shop) return;
+    document.getElementById('fId').value = shop.id;
+    document.getElementById('fName').value = shop.name;
+    document.getElementById('fOwner').value = shop.owner;
+    document.getElementById('fLat').value = shop.lat;
+    document.getElementById('fLng').value = shop.lng;
+    document.getElementById('fSummary').value = shop.summary || '';
+    document.getElementById('fNoteUrl').value = shop.noteUrl;
+    document.getElementById('fPhoto').value = '';
+
+    document.getElementById('photoRequiredMark').style.display = 'none';
+    document.getElementById('photoHint').textContent = '写真を選び直さなければ、既存の写真がそのまま使われます。';
+
+    document.getElementById('editingBanner').classList.add('show');
+    document.getElementById('editingBannerText').textContent = `「${shop.name}」を編集中`;
+    document.getElementById('submitBtn').textContent = 'この内容で更新する';
+
+    document.querySelector('section:nth-of-type(2)').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function resetForm(){
+    ['fId','fName','fOwner','fLat','fLng','fSummary','fNoteUrl'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('fPhoto').value = '';
+    document.getElementById('fId').value = document.getElementById('nextIdBadge').textContent !== '—'
+      ? document.getElementById('nextIdBadge').textContent : '';
+
+    document.getElementById('photoRequiredMark').style.display = 'inline';
+    document.getElementById('photoHint').textContent = 'アップロード時に自動で縮小・圧縮します（長辺600px程度）。';
+
+    document.getElementById('editingBanner').classList.remove('show');
+    document.getElementById('submitBtn').textContent = 'GitHubに登録する';
   }
 
   function resizeImage(file, maxSide){
@@ -460,13 +593,18 @@
       showStatus('submitStatus', 'loading', 'shops.json を更新しています…');
       const newShop = { id, name, owner, lat, lng, photo: photoPath, summary, noteUrl };
       const idx = currentShops.findIndex(s => s.id === id);
-      if(idx >= 0){ currentShops[idx] = newShop; } else { currentShops.push(newShop); }
+      const isEdit = idx >= 0;
+      if(isEdit){ currentShops[idx] = newShop; } else { currentShops.push(newShop); }
 
       const updatedJson = JSON.stringify(currentShops, null, 2);
-      const result = await putFile('shops.json', b64EncodeUnicode(updatedJson), `お店追加: ${name}`, currentShopsSha);
+      const commitMsg = isEdit ? `お店更新: ${name}` : `お店追加: ${name}`;
+      const result = await putFile('shops.json', b64EncodeUnicode(updatedJson), commitMsg, currentShopsSha);
       currentShopsSha = result.content.sha;
 
-      showStatus('submitStatus', 'ok', `「${name}」を登録しました。サイトに反映されるまで数十秒かかることがあります。`);
+      renderShopTable();
+      saveConnectionIfNeeded();
+      resetForm();
+      showStatus('submitStatus', 'ok', `「${name}」を${isEdit ? '更新' : '登録'}しました。サイトに反映されるまで数十秒かかることがあります。`);
     }catch(err){
       showStatus('submitStatus', 'err', 'エラー：' + err.message);
     }finally{

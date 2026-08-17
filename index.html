@@ -176,13 +176,15 @@
     color: var(--ink);
     margin: 0 0 12px;
   }
-  .card-link{
+  .card-link,
+  .card-link:link,
+  .card-link:visited{
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     background: var(--red);
-    color: var(--paper);
+    color: #ffffff !important;
     text-decoration: none;
     font-weight: 700;
     font-size: 12.5px;
@@ -190,7 +192,7 @@
     border-radius: 8px;
     transition: background 0.15s ease;
   }
-  .card-link:hover{ background: var(--red-deep); }
+  .card-link:hover, .card-link:active{ background: var(--red-deep); color: #ffffff !important; }
 
   /* ---------- フッター小片 ---------- */
   .footnote{
