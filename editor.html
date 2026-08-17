@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お店登録エディター | Knock Local 阪神尼崎</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #fbf2e4;
+    --paper-deep: #f0e2c6;
+    --ink: #2c2420;
+    --ink-soft: #6e6152;
+    --navy: #274c5b;
+    --red: #d6483a;
+    --red-deep: #ab362a;
+    --green: #4a7856;
+    --line: rgba(44,36,32,0.16);
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin: 0;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 24px 16px 60px;
+  }
+  .wrap{ max-width: 560px; margin: 0 auto; }
+  h1{
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--navy);
+    margin: 0 0 4px;
+  }
+  .page-sub{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin: 0 0 24px;
+  }
+  section{
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 18px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 3px 10px rgba(44,36,32,0.06);
+  }
+  section h2{
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--navy);
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  section h2 .num{
+    background: var(--navy);
+    color: #fff;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  section .desc{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
+  label{
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 12px 0 5px;
+  }
+  label .required{ color: var(--red); font-size: 10px; margin-left: 4px; }
+  input[type=text], input[type=password], input[type=number], textarea{
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  textarea{ resize: vertical; min-height: 60px; }
+  input[type=file]{ font-size: 12.5px; margin-top: 2px; }
+  .row2{ display: flex; gap: 10px; }
+  .row2 > div{ flex: 1; }
+  .hint{ font-size: 10.5px; color: var(--ink-soft); margin-top: 4px; }
+
+  button{
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-primary{
+    width: 100%;
+    background: var(--red);
+    color: #fff;
+    font-weight: 900;
+    font-size: 14px;
+    padding: 13px 0;
+    border-radius: 10px;
+    margin-top: 18px;
+  }
+  .btn-primary:hover{ background: var(--red-deep); }
+  .btn-primary:disabled{ background: #c9c2b7; cursor: not-allowed; }
+  .btn-secondary{
+    background: var(--navy);
+    color: #fff;
+    font-weight: 700;
+    font-size: 12.5px;
+    padding: 9px 16px;
+    border-radius: 8px;
+  }
+  .btn-secondary:hover{ background: #1d3a45; }
+
+  .status{
+    margin-top: 12px;
+    font-size: 12.5px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    line-height: 1.7;
+    display: none;
+  }
+  .status.show{ display: block; }
+  .status.ok{ background: #e9f3ec; color: var(--green); border: 1px solid #c6e0cc; }
+  .status.err{ background: #fbeae7; color: var(--red-deep); border: 1px solid #f2c8c1; }
+  .status.loading{ background: var(--paper-deep); color: var(--ink-soft); }
+
+  table{ width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+  th, td{ text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  th{ color: var(--ink-soft); font-weight: 700; }
+  .id-badge{
+    display: inline-block;
+    background: var(--paper-deep);
+    color: var(--navy);
+    font-weight: 900;
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 999px;
+  }
+  .thumb{
+    width: 28px; height: 28px; border-radius: 50%;
+    object-fit: cover; border: 1px solid var(--line);
+    vertical-align: middle;
+  }
+  .next-id-line{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-top: 10px;
+  }
+  .next-id-line .id-badge{ font-size: 12px; padding: 2px 9px; }
+  .lock-overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .lock-overlay.hidden{ display: none; }
+  .lock-box{
+    max-width: 320px;
+    width: 100%;
+    text-align: center;
+  }
+  .lock-box h1{
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+  .lock-box p{
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 0 0 18px;
+  }
+  .lock-box input{
+    text-align: center;
+    letter-spacing: 0.1em;
+  }
+  .lock-box .btn-primary{ margin-top: 12px; }
+  .lock-error{
+    color: var(--red-deep);
+    font-size: 12px;
+    margin-top: 10px;
+    display: none;
+  }
+  .lock-error.show{ display: block; }
+
+  .app-content{ display: none; }
+  .app-content.unlocked{ display: block; }
+</style>
+</head>
+<body>
+
+<div class="lock-overlay" id="lockOverlay">
+  <div class="lock-box">
+    <h1>お店登録エディター</h1>
+    <p>パスワードを入力してください</p>
+    <input type="password" id="lockPassword" placeholder="パスワード" onkeydown="if(event.key==='Enter') checkPassword()">
+    <button class="btn-primary" onclick="checkPassword()">ロックを解除</button>
+    <p class="lock-error" id="lockError">パスワードが違います。</p>
+  </div>
+</div>
+
+<div class="wrap app-content" id="appContent">
+  <h1>お店登録エディター</h1>
+  <p class="page-sub">Knock Local 阪神尼崎 — 新しいお店をマップに追加します</p>
+
+  <section>
+    <h2><span class="num">1</span>GitHub接続設定</h2>
+    <p class="desc">この画面から直接リポジトリを更新します。Personal Access Token（Contents の read/write 権限）が必要です。トークンは保存されず、ページを閉じると消えます。</p>
+
+    <label>GitHubユーザー名 / Organization<span class="required">必須</span></label>
+    <input type="text" id="ghOwner" placeholder="例：oricom-jpn">
+
+    <label>リポジトリ名<span class="required">必須</span></label>
+    <input type="text" id="ghRepo" placeholder="例：knocklocal">
+
+    <label>ブランチ</label>
+    <input type="text" id="ghBranch" value="main">
+
+    <label>Personal Access Token<span class="required">必須</span></label>
+    <input type="password" id="ghToken" placeholder="ghp_...">
+    <p class="hint">GitHub右上のアイコン → Settings → Developer settings → Personal access tokens で発行できます。</p>
+
+    <button class="btn-secondary" style="margin-top:14px;" onclick="loadShops()">既存データを読み込む</button>
+    <div id="loadStatus" class="status"></div>
+
+    <div id="shopTableWrap" style="display:none; margin-top:14px;">
+      <table>
+        <thead><tr><th></th><th>ID</th><th>店名</th></tr></thead>
+        <tbody id="shopTableBody"></tbody>
+      </table>
+      <p class="next-id-line">次のID候補：<span class="id-badge" id="nextIdBadge">—</span></p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span>新しいお店を登録</h2>
+    <p class="desc">「1」で既存データを読み込むと、IDが自動で採番されます。写真は自動で圧縮してからアップロードします。</p>
+
+    <div class="row2">
+      <div>
+        <label>ID<span class="required">必須</span></label>
+        <input type="text" id="fId" placeholder="例：002">
+      </div>
+      <div style="flex:2">
+        <label>店名<span class="required">必須</span></label>
+        <input type="text" id="fName" placeholder="例：喫茶 くじら座">
+      </div>
+    </div>
+
+    <label>店主名 / 運営名<span class="required">必須</span></label>
+    <input type="text" id="fOwner" placeholder="例：店主 田中さん">
+
+    <div class="row2">
+      <div>
+        <label>緯度（lat）<span class="required">必須</span></label>
+        <input type="text" id="fLat" placeholder="例：34.7178">
+      </div>
+      <div>
+        <label>経度（lng）<span class="required">必須</span></label>
+        <input type="text" id="fLng" placeholder="例：135.4085">
+      </div>
+    </div>
+    <p class="hint">Googleマップでピンをタップすると緯度経度が表示されます。それをコピーして貼り付けてください。</p>
+
+    <label>店主の写真<span class="required">必須</span></label>
+    <input type="file" id="fPhoto" accept="image/*">
+    <p class="hint">アップロード時に自動で縮小・圧縮します（長辺600px程度）。</p>
+
+    <label>紹介文</label>
+    <textarea id="fSummary" placeholder="一言紹介文"></textarea>
+
+    <label>note記事URL<span class="required">必須</span></label>
+    <input type="text" id="fNoteUrl" placeholder="https://note.com/...">
+
+    <button class="btn-primary" id="submitBtn" onclick="submitShop()">GitHubに登録する</button>
+    <div id="submitStatus" class="status"></div>
+  </section>
+</div>
+
+<script>
+  const EDITOR_PASSWORD = "oricom&2026";
+
+  function checkPassword(){
+    const input = document.getElementById('lockPassword').value;
+    if(input === EDITOR_PASSWORD){
+      document.getElementById('lockOverlay').classList.add('hidden');
+      document.getElementById('appContent').classList.add('unlocked');
+    }else{
+      document.getElementById('lockError').classList.add('show');
+    }
+  }
+
+  let currentShops = null;
+  let currentShopsSha = null;
+
+  function ghHeaders(){
+    return {
+      'Authorization': 'Bearer ' + document.getElementById('ghToken').value.trim(),
+      'Accept': 'application/vnd.github+json'
+    };
+  }
+  function repoBase(){
+    const owner = document.getElementById('ghOwner').value.trim();
+    const repo = document.getElementById('ghRepo').value.trim();
+    return `https://api.github.com/repos/${owner}/${repo}`;
+  }
+  function branch(){
+    return document.getElementById('ghBranch').value.trim() || 'main';
+  }
+
+  // UTF-8対応のbase64エンコード／デコード
+  function b64EncodeUnicode(str){
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+      (_, p1) => String.fromCharCode('0x' + p1)));
+  }
+  function b64DecodeUnicode(str){
+    return decodeURIComponent(atob(str).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+  }
+
+  function showStatus(id, type, msg){
+    const el = document.getElementById(id);
+    el.className = 'status show ' + type;
+    el.innerHTML = msg;
+  }
+
+  async function loadShops(){
+    showStatus('loadStatus', 'loading', '読み込み中…');
+    try{
+      const res = await fetch(`${repoBase()}/contents/shops.json?ref=${branch()}`, { headers: ghHeaders() });
+      if(!res.ok) throw new Error(`shops.json の取得に失敗しました（${res.status}）`);
+      const data = await res.json();
+      currentShopsSha = data.sha;
+      currentShops = JSON.parse(b64DecodeUnicode(data.content));
+
+      const tbody = document.getElementById('shopTableBody');
+      tbody.innerHTML = '';
+      let maxId = 0;
+      currentShops.forEach(shop => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><img class="thumb" src="${shop.photo}" onerror="this.style.visibility='hidden'"></td>
+          <td><span class="id-badge">${shop.id}</span></td>
+          <td>${shop.name}</td>
+        `;
+        tbody.appendChild(tr);
+        const n = parseInt(shop.id, 10);
+        if(!isNaN(n) && n > maxId) maxId = n;
+      });
+      document.getElementById('shopTableWrap').style.display = 'block';
+
+      const nextId = String(maxId + 1).padStart(3, '0');
+      document.getElementById('nextIdBadge').textContent = nextId;
+      if(!document.getElementById('fId').value){
+        document.getElementById('fId').value = nextId;
+      }
+
+      showStatus('loadStatus', 'ok', `${currentShops.length}件のお店データを読み込みました。`);
+    }catch(err){
+      showStatus('loadStatus', 'err', 'エラー：' + err.message);
+    }
+  }
+
+  function resizeImage(file, maxSide){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = e => { img.src = e.target.result; };
+      reader.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        if(width > height && width > maxSide){
+          height = Math.round(height * (maxSide / width));
+          width = maxSide;
+        }else if(height > maxSide){
+          width = Math.round(width * (maxSide / height));
+          height = maxSide;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        resolve(dataUrl.split(',')[1]); // base64本体のみ
+      };
+      img.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function putFile(path, base64Content, message, existingSha){
+    const body = { message, content: base64Content, branch: branch() };
+    if(existingSha) body.sha = existingSha;
+    const res = await fetch(`${repoBase()}/contents/${path}`, {
+      method: 'PUT',
+      headers: ghHeaders(),
+      body: JSON.stringify(body)
+    });
+    if(!res.ok){
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(`${path} の保存に失敗しました（${res.status}）：${errData.message || ''}`);
+    }
+    return res.json();
+  }
+
+  async function getFileSha(path){
+    const res = await fetch(`${repoBase()}/contents/${path}?ref=${branch()}`, { headers: ghHeaders() });
+    if(res.status === 404) return null;
+    if(!res.ok) throw new Error(`${path} の確認に失敗しました（${res.status}）`);
+    const data = await res.json();
+    return data.sha;
+  }
+
+  async function submitShop(){
+    const id = document.getElementById('fId').value.trim();
+    const name = document.getElementById('fName').value.trim();
+    const owner = document.getElementById('fOwner').value.trim();
+    const lat = parseFloat(document.getElementById('fLat').value);
+    const lng = parseFloat(document.getElementById('fLng').value);
+    const summary = document.getElementById('fSummary').value.trim();
+    const noteUrl = document.getElementById('fNoteUrl').value.trim();
+    const photoFile = document.getElementById('fPhoto').files[0];
+
+    if(!id || !name || !owner || isNaN(lat) || isNaN(lng) || !noteUrl){
+      showStatus('submitStatus', 'err', '必須項目（ID・店名・店主名・緯度・経度・note URL）が未入力です。');
+      return;
+    }
+    if(currentShops === null){
+      showStatus('submitStatus', 'err', '先に「1. 既存データを読み込む」を実行してください。');
+      return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    showStatus('submitStatus', 'loading', '処理中…');
+
+    try{
+      const photoPath = `images/${id}.jpg`;
+
+      // 1. 写真をリサイズしてアップロード（同名ファイルがあれば上書き）
+      if(photoFile){
+        showStatus('submitStatus', 'loading', '写真を圧縮しています…');
+        const base64Photo = await resizeImage(photoFile, 600);
+        const existingPhotoSha = await getFileSha(photoPath);
+        showStatus('submitStatus', 'loading', '写真をアップロードしています…');
+        await putFile(photoPath, base64Photo, `写真追加: ${name}`, existingPhotoSha);
+      }
+
+      // 2. shops.json を更新
+      showStatus('submitStatus', 'loading', 'shops.json を更新しています…');
+      const newShop = { id, name, owner, lat, lng, photo: photoPath, summary, noteUrl };
+      const idx = currentShops.findIndex(s => s.id === id);
+      if(idx >= 0){ currentShops[idx] = newShop; } else { currentShops.push(newShop); }
+
+      const updatedJson = JSON.stringify(currentShops, null, 2);
+      const result = await putFile('shops.json', b64EncodeUnicode(updatedJson), `お店追加: ${name}`, currentShopsSha);
+      currentShopsSha = result.content.sha;
+
+      showStatus('submitStatus', 'ok', `「${name}」を登録しました。サイトに反映されるまで数十秒かかることがあります。`);
+    }catch(err){
+      showStatus('submitStatus', 'err', 'エラー：' + err.message);
+    }finally{
+      btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
